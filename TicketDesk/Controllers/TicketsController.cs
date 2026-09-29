@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TicketDesk.DTOs;
 using TicketDesk.Models;
 using TicketDesk.Repositories;
 
@@ -30,20 +31,32 @@ namespace TicketDesk.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Ticket>> Create(Ticket newTicket)
+        public async Task<ActionResult<Ticket>> Create(CreateTicketDto dto)
         {
-            var created = await _repository.CreateAsync(newTicket);
+            var ticket = new Ticket
+            {
+                Title = dto.Title,
+                Description = dto.Description
+            };
+
+            var created = await _repository.CreateAsync(ticket);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Ticket updatedTicket)
+        public async Task<IActionResult> Update(int id, UpdateTicketDto dto)
         {
-            var success = await _repository.UpdateAsync(id, updatedTicket);
+            var updated = new Ticket
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Status = dto.Status
+            };
+
+            var success = await _repository.UpdateAsync(id, updated);
             if (!success) return NotFound();
             return NoContent();
         }
-
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
