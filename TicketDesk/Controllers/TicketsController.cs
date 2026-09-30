@@ -16,22 +16,39 @@ namespace TicketDesk.Controllers
             _repository = repository;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ticket>>> GetAll()
+        private static TicketDto ToDto(Ticket t) => new()
         {
-            return Ok(await _repository.GetAllAsync());
+            Id = t.Id,
+            Title = t.Title,
+            Description = t.Description,
+            Status = t.Status,
+            CreatedAt = t.CreatedAt,
+            Comments = t.Comments.Select(c => new CommentDto
+            {
+                Id = c.Id,
+                Text = c.Text,
+                Author = c.Author,
+                CreatedAt = c.CreatedAt
+            }).ToList()
+        };
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TicketDto>>> GetAll()
+        {
+            var tickets = await _repository.GetAllAsync();
+            return Ok(tickets.Select(ToDto));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Ticket>> GetById(int id)
+        public async Task<ActionResult<TicketDto>> GetById(int id)
         {
             var ticket = await _repository.GetByIdAsync(id);
             if (ticket == null) return NotFound();
-            return Ok(ticket);
+            return Ok(ToDto(ticket));
         }
 
         [HttpPost]
-        public async Task<ActionResult<Ticket>> Create(CreateTicketDto dto)
+        public async Task<ActionResult<TicketDto>> Create(CreateTicketDto dto)
         {
             var ticket = new Ticket
             {
@@ -40,7 +57,7 @@ namespace TicketDesk.Controllers
             };
 
             var created = await _repository.CreateAsync(ticket);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, ToDto(created));
         }
 
         [HttpPut("{id}")]
@@ -57,12 +74,29 @@ namespace TicketDesk.Controllers
             if (!success) return NotFound();
             return NoContent();
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _repository.DeleteAsync(id);
             if (!success) return NotFound();
             return NoContent();
+        }
+
+        [HttpPost("{ticketId}/comments")]
+        public async Task<ActionResult<CommentDto>> AddComment(int ticketId, CreateCommentDto dto)
+        {
+            var comment = new Comment { Text = dto.Text, Author = dto.Author };
+            var created = await _repository.AddCommentAsync(ticketId, comment);
+            if (created == null) return NotFound();
+
+            return Ok(new CommentDto
+            {
+                Id = created.Id,
+                Text = created.Text,
+                Author = created.Author,
+                CreatedAt = created.CreatedAt
+            });
         }
     }
 }

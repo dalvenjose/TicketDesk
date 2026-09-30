@@ -9,5 +9,6 @@ namespace TicketDesk.Repositories
         Task<Ticket> CreateAsync(Ticket ticket);
         Task<bool> UpdateAsync(int id, Ticket updatedTicket);
         Task<bool> DeleteAsync(int id);
+        Task<Comment?> AddCommentAsync(int ticketId, Comment comment);
     }
 }

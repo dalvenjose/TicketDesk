@@ -15,12 +15,27 @@ namespace TicketDesk.Repositories
 
         public async Task<IEnumerable<Ticket>> GetAllAsync()
         {
-            return await _context.Tickets.ToListAsync();
+            return await _context.Tickets
+                .Include(t => t.Comments)
+                .ToListAsync();
         }
 
         public async Task<Ticket?> GetByIdAsync(int id)
         {
-            return await _context.Tickets.FindAsync(id);
+            return await _context.Tickets
+                .Include(t => t.Comments)
+                .FirstOrDefaultAsync(t => t.Id == id);
+        }
+
+        public async Task<Comment?> AddCommentAsync(int ticketId, Comment comment)
+        {
+            var exists = await _context.Tickets.AnyAsync(t => t.Id == ticketId);
+            if (!exists) return null;
+
+            comment.TicketId = ticketId;
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+            return comment;
         }
 
         public async Task<Ticket> CreateAsync(Ticket ticket)
