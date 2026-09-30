@@ -7,5 +7,6 @@
         public string Description { get; set; } = string.Empty;
         public string Status { get; set; } = "Open";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public List<Comment> Comments { get; set; } = new();
     }
 }
