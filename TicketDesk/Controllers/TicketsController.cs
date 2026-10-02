@@ -10,10 +10,12 @@ namespace TicketDesk.Controllers
     public class TicketsController : ControllerBase
     {
         private readonly ITicketRepository _repository;
+        private readonly ILogger<TicketsController> _logger;   
 
-        public TicketsController(ITicketRepository repository)
+        public TicketsController(ITicketRepository repository, ILogger<TicketsController> logger)   
         {
             _repository = repository;
+            _logger = logger;   
         }
 
         private static TicketDto ToDto(Ticket t) => new()
@@ -43,7 +45,11 @@ namespace TicketDesk.Controllers
         public async Task<ActionResult<TicketDto>> GetById(int id)
         {
             var ticket = await _repository.GetByIdAsync(id);
-            if (ticket == null) return NotFound();
+            if (ticket == null)
+            {
+                _logger.LogWarning("Ticket {TicketId} was requested but not found", id);   
+                return NotFound();
+            }
             return Ok(ToDto(ticket));
         }
 
@@ -57,6 +63,7 @@ namespace TicketDesk.Controllers
             };
 
             var created = await _repository.CreateAsync(ticket);
+            _logger.LogInformation("Ticket {TicketId} created with title '{Title}'", created.Id, created.Title); 
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, ToDto(created));
         }
 
